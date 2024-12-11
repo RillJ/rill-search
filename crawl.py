@@ -87,10 +87,11 @@ class Crawler:
                 self.index[word].append(url)
         print(f"{print_prefix} Indexed content from the URL: {url}")
 
-    def search(self, words):
+    def search(self, words, all_words = True):
             """
             Search the index for pages containing all the given words.
             Var 'words': A list of words to search for.
+            Var 'all_words': If True, will only search for URLs that contain all words from the list.
             Returns: A list of URLs containing all the words.
             """
             print_prefix = f"{self.search.__name__} >"
@@ -103,6 +104,18 @@ class Crawler:
                     for url in self.index[word]:
                         if url not in found_urls: # Avoid duplicate URLs
                             found_urls.append(url)
+            # Filter for URLs that contain all words instead of only some
+            if all_words:
+                filtered_urls = []
+                for url in found_urls:
+                    contains_all_words = True
+                    for word in normalized_words:
+                        if word not in self.index or url not in self.index[word]:
+                            contains_all_words = False
+                            break
+                    if contains_all_words:
+                        filtered_urls.append(url)
+                found_urls = filtered_urls
             print(f"{print_prefix} For the search {words}, found URLs: {found_urls}")
             return found_urls
 
