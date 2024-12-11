@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Rill Search - Results</title>
+</head>
+<body>
+    {% if results %} <!-- Check if there are any search results. -->
+        <ul>
+            <!-- Loop through each URL in the results, then show clickable links which open in new tabs. -->
+            {% for url in results %}
+                <li><a href="{{ url }}" target="_blank">{{ url }}</a></li>
+            {% endfor %}
+        </ul>
+    {% else %} <!-- If there are no search results, tell the user. -->
+        <p>Rill Search couldn't find anything for your query "{{ query }}", sorry!</p>
+    {% endif %}
+    <a href="/">Back home</a> <!-- Show a clickable link which goes back home (to search again). -->
+</body>
+</html>

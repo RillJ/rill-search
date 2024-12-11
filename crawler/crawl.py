@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
 from whoosh.index import create_in
 from whoosh.fields import Schema, TEXT, ID
-from whoosh.qparser import QueryParser
+#from whoosh.qparser import QueryParser
 
 class Crawler:
     def __init__(self, start_url):
@@ -89,21 +89,21 @@ class Crawler:
         self.writer.add_document(url=url, content=text) # Add the crawled URL to the Whoosh index
         print(f"{print_prefix} Indexed content from the URL: {url}")
 
-    def search(self, query):
-        """
-        Search the Whoosh index for pages containing the query string.
-        Var 'query_str': The search query as a string.
-        Returns: A list of URLs containing the query string.
-        """
-        print_prefix = f"{self.search.__name__} >"
-        print(f"{print_prefix} Searching for: {query}")
-        whoosh_query = QueryParser("content", self.index.schema).parse(query) # Parse query to a Whoosh query
-        results = self.index.searcher().search(whoosh_query) # Search on this query
-        found_urls = []
-        for result in results:
-            found_urls.append(result["url"]) # Append only the URLs to the list
-        print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}")
-        return found_urls
+    # def search(self, query):
+    #     """
+    #     Search the Whoosh index for pages containing the query string.
+    #     Var 'query_str': The search query as a string.
+    #     Returns: A list of URLs containing the query string.
+    #     """
+    #     print_prefix = f"{self.search.__name__} >"
+    #     print(f"{print_prefix} Searching for: {query}")
+    #     whoosh_query = QueryParser("content", self.index.schema).parse(query) # Parse query to a Whoosh query
+    #     results = self.index.searcher().search(whoosh_query) # Search on this query
+    #     found_urls = []
+    #     for result in results:
+    #         found_urls.append(result["url"]) # Append only the URLs to the list
+    #     print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}")
+    #     return found_urls
 
 # if __name__ == "__main__":
 #     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
