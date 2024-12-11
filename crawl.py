@@ -1,3 +1,4 @@
+import re
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
@@ -71,12 +72,12 @@ class Crawler:
         text = soupie.get_text() # Extract the visible text from the HTML
         words = text.split() # Split text into list of words
         for word in words:
-            word = word.lower().strip() # Normalize words to lowercase and remove whitespace
+            word = re.sub('\W+','', word.lower().strip()) # Normalize and remove special characters
             if word not in self.index:
                 self.index[word] = []
             if url not in self.index[word]:
                 self.index[word].append(url)
-        print(f"{print_prefix} Indexed content from the URL {url}.")
+        print(f"{print_prefix} Indexed content from the URL: {url}")
 
 if __name__ == "__main__":
     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
