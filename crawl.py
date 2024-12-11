@@ -6,6 +6,7 @@ class Crawler:
     def __init__(self, start_url):
         self.start_url = start_url # Start crawling from this URL
         self.visited_urls = set() # Easier than a list (prevents duplicates)
+        self.index = {} # Dictionary for the in-memory index
 
     def start_crawling(self):
         """
@@ -28,6 +29,7 @@ class Crawler:
             response = requests.get(url) # Fetch URL
             if response.headers["Content-Type"].startswith("text/html"): # Only process HTML responses
                 self.visited_urls.add(url)
+                self.index_page(url, response.text) # Index the page content
                 self.parse_links(url, response.text)
             else:
                 print(f"{print_prefix} The URL {url} is not a HTML document. Ignoring.")
@@ -59,6 +61,22 @@ class Crawler:
         else:
             print(f"{print_prefix} The URL {url} is not on the same server as {start_netloc}. Ignoring.")
             return False
+
+    def index_page(self, url, html):
+        """
+        Build an in-memory index from the HTML text content found on the given page.
+        """
+        print_prefix = f"{self.index_page.__name__} >"
+        soupie = BeautifulSoup(html, 'html.parser')
+        text = soupie.get_text() # Extract the visible text from the HTML
+        words = text.split() # Split text into list of words
+        for word in words:
+            word = word.lower().strip() # Normalize words to lowercase and remove whitespace
+            if word not in self.index:
+                self.index[word] = []
+            if url not in self.index[word]:
+                self.index[word].append(url)
+        print(f"{print_prefix} Indexed content from the URL {url}.")
 
 if __name__ == "__main__":
     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
