@@ -56,8 +56,8 @@ class Crawler:
         print_prefix = f"{self.parse_links.__name__} >"
         soupie = BeautifulSoup(html, "html.parser")
         for a in soupie.find_all("a", href=True):
-            print(f"{print_prefix} Parsing the URL: {a['href']}")
             full_url = urljoin(base_url, a['href'])
+            print(f"{print_prefix} Parsing the URL: {full_url}")
             if self.is_same_server(full_url):
                 self.crawl_page(full_url)
 
@@ -105,7 +105,7 @@ class Crawler:
         print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}")
         return found_urls
 
-if __name__ == "__main__":
-    crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
-    crawler.start_crawling()
-    search_results = crawler.search("Australia and Biology")
+# if __name__ == "__main__":
+#     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
+#     crawler.start_crawling()
+#     search_results = crawler.search("Australia and Biology")
