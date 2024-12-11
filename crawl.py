@@ -12,7 +12,6 @@ class Crawler:
     def start_crawling(self):
         """
         Start crawling from the initial URL input when creating the class.
-        This is recursive until all pages within the starting URL have been crawled.
         """
         print_prefix = f"{self.start_crawling.__name__} >"
         print(f"{print_prefix} Starting to crawl now!")
@@ -20,7 +19,9 @@ class Crawler:
     
     def crawl_page(self, url):
         """
-        Crawl a single page and parse the links on the page.
+        Crawl a single page, index the page content and parse the links on the page.
+        Var 'url': The URL that will be crawled.
+        Appends: The 'visited_urls' set.
         """
         print_prefix = f"{self.crawl_page.__name__} >"
         if url in self.visited_urls: # Skip already visited URLs
@@ -29,9 +30,10 @@ class Crawler:
             print(f"{print_prefix} Currently crawling the URL: {url}")
             response = requests.get(url) # Fetch URL
             if response.headers["Content-Type"].startswith("text/html"): # Only process HTML responses
-                self.visited_urls.add(url)
+                self.visited_urls.add(url) # Add the visited URL to the set
+                print(f"{print_prefix} Successfully added {url} to the set.")
                 self.index_page(url, response.text) # Index the page content
-                self.parse_links(url, response.text)
+                self.parse_links(url, response.text) # Parse the links on the page
             else:
                 print(f"{print_prefix} The URL {url} is not a HTML document. Ignoring.")
 
@@ -39,6 +41,8 @@ class Crawler:
         """
         Parse links in the URL's HTML content and crawl these links.
         This makes the link crawling recursive until it has crawled all pages.
+        Var 'base_url': The URL that was crawled.
+        Var 'html': Scraped plaintext HTML content of the crawled URL in question.
         """
         print_prefix = f"{self.parse_links.__name__} >"
         soupie = BeautifulSoup(html, "html.parser")
@@ -47,11 +51,12 @@ class Crawler:
             full_url = urljoin(base_url, a['href'])
             if self.is_same_server(full_url):
                 self.crawl_page(full_url)
-                print(f"{print_prefix} Successfully added {full_url} to the set.")
 
     def is_same_server(self, url):
         """
         Verify if the input URL belongs to the same server/network location as the start URL.
+        Var 'url': The URL that needs to be compared to the start URL.
+        Returns: True if it is on the same server and False if not.
         """
         print_prefix = f"{self.is_same_server.__name__} >"
         start_netloc = urlparse(self.start_url).netloc
@@ -66,6 +71,9 @@ class Crawler:
     def index_page(self, url, html):
         """
         Build an in-memory index from the HTML text content found on the given page.
+        Var 'url': The URL of the HTML page that contains text content.
+        Var 'html': Scraped plaintext HTML content of the crawled URL in question.
+        Appends: The found words on the HTML page to the 'index' dictionary.
         """
         print_prefix = f"{self.index_page.__name__} >"
         soupie = BeautifulSoup(html, 'html.parser')
@@ -79,6 +87,26 @@ class Crawler:
                 self.index[word].append(url)
         print(f"{print_prefix} Indexed content from the URL: {url}")
 
+    def search(self, words):
+            """
+            Search the index for pages containing all the given words.
+            Var 'words': A list of words to search for.
+            Returns: A list of URLs containing all the words.
+            """
+            print_prefix = f"{self.search.__name__} >"
+            print(f"{print_prefix} Searching for words: {words}")
+            normalized_words = [word.lower() for word in words] # Normalize words to lowercase
+            found_urls = []
+            # For all words in the list, check if they appear in the index
+            for word in normalized_words:
+                if word in self.index:
+                    for url in self.index[word]:
+                        if url not in found_urls: # Avoid duplicate URLs
+                            found_urls.append(url)
+            print(f"{print_prefix} For the search {words}, found URLs: {found_urls}")
+            return found_urls
+
 if __name__ == "__main__":
     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
     crawler.start_crawling()
+    search_results = crawler.search(["Australia", "Biology"])
