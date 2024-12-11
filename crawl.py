@@ -1,13 +1,20 @@
-import re
+import os
 import requests
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
+from whoosh.index import create_in
+from whoosh.fields import Schema, TEXT, ID
+from whoosh.qparser import QueryParser
 
 class Crawler:
     def __init__(self, start_url):
         self.start_url = start_url # Start crawling from this URL
         self.visited_urls = set() # Easier than a list (prevents duplicates)
-        self.index = {} # Dictionary for the in-memory index
+        if not os.path.exists("indexdir"):
+            os.mkdir("indexdir") # Create Whoosh indexdir folder if it doesn't exist
+        schema = Schema(url=ID(stored=True, unique=True), content=TEXT) # Setting up Whoosh index
+        self.index = create_in("indexdir", schema)
+        self.writer = self.index.writer()
 
     def start_crawling(self):
         """
@@ -16,7 +23,9 @@ class Crawler:
         print_prefix = f"{self.start_crawling.__name__} >"
         print(f"{print_prefix} Starting to crawl now!")
         self.crawl_page(self.start_url)
-    
+        self.writer.commit() # Once all pages have been crawled, commit to Whoosh
+        print(f"{print_prefix} Finished crawling!")
+
     def crawl_page(self, url):
         """
         Crawl a single page, index the page content and parse the links on the page.
@@ -70,56 +79,33 @@ class Crawler:
 
     def index_page(self, url, html):
         """
-        Build an in-memory index from the HTML text content found on the given page.
+        Use the Whoosh library to index the HTML text content found on the given page.
         Var 'url': The URL of the HTML page that contains text content.
         Var 'html': Scraped plaintext HTML content of the crawled URL in question.
-        Appends: The found words on the HTML page to the 'index' dictionary.
         """
         print_prefix = f"{self.index_page.__name__} >"
-        soupie = BeautifulSoup(html, 'html.parser')
+        soupie = BeautifulSoup(html, "html.parser")
         text = soupie.get_text() # Extract the visible text from the HTML
-        words = text.split() # Split text into list of words
-        for word in words:
-            word = re.sub('\W+','', word.lower().strip()) # Normalize and remove special characters
-            if word not in self.index:
-                self.index[word] = []
-            if url not in self.index[word]:
-                self.index[word].append(url)
+        self.writer.add_document(url=url, content=text) # Add the crawled URL to the Whoosh index
         print(f"{print_prefix} Indexed content from the URL: {url}")
 
-    def search(self, words, all_words = True):
-            """
-            Search the index for pages containing all the given words.
-            Var 'words': A list of words to search for.
-            Var 'all_words': If True, will only search for URLs that contain all words from the list.
-            Returns: A list of URLs containing all the words.
-            """
-            print_prefix = f"{self.search.__name__} >"
-            print(f"{print_prefix} Searching for words: {words}")
-            normalized_words = [word.lower() for word in words] # Normalize words to lowercase
-            found_urls = []
-            # For all words in the list, check if they appear in the index
-            for word in normalized_words:
-                if word in self.index:
-                    for url in self.index[word]:
-                        if url not in found_urls: # Avoid duplicate URLs
-                            found_urls.append(url)
-            # Filter for URLs that contain all words instead of only some
-            if all_words:
-                filtered_urls = []
-                for url in found_urls:
-                    contains_all_words = True
-                    for word in normalized_words:
-                        if word not in self.index or url not in self.index[word]:
-                            contains_all_words = False
-                            break
-                    if contains_all_words:
-                        filtered_urls.append(url)
-                found_urls = filtered_urls
-            print(f"{print_prefix} For the search {words}, found URLs: {found_urls}")
-            return found_urls
+    def search(self, query):
+        """
+        Search the Whoosh index for pages containing the query string.
+        Var 'query_str': The search query as a string.
+        Returns: A list of URLs containing the query string.
+        """
+        print_prefix = f"{self.search.__name__} >"
+        print(f"{print_prefix} Searching for: {query}")
+        whoosh_query = QueryParser("content", self.index.schema).parse(query) # Parse query to a Whoosh query
+        results = self.index.searcher().search(whoosh_query) # Search on this query
+        found_urls = []
+        for result in results:
+            found_urls.append(result["url"]) # Append only the URLs to the list
+        print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}")
+        return found_urls
 
 if __name__ == "__main__":
     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
     crawler.start_crawling()
-    search_results = crawler.search(["Australia", "Biology"])
+    search_results = crawler.search("Australia and Biology")
