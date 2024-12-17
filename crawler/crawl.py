@@ -110,12 +110,18 @@ class Crawler:
             title = soupie.title.string.strip()
         else:
             title = url
-        text = soupie.get_text() # Extract the visible text from the HTML
-        # First 250 words appended by dots as a 'teaser'
-        if len(text) > 150:
-            teaser = text[:150] + "..."
+        text = soupie.get_text(strip=True) # Obtain all text on the web page
+        # Extract content only from <p> tags to avoid irrelevant text for the teaser
+        paragraphs = ""
+        for p in soupie.find_all("p"):
+            paragraphs += f"{p.get_text(strip=True)}\n"
+        if len(paragraphs) < 1:
+            paragraphs = "No text found on this web page."
+        # First 150 words appended by dots as a 'teaser'
+        if len(paragraphs) > 150:
+            teaser = paragraphs[:150] + "..."
         else:
-            teaser = text
+            teaser = paragraphs
         self.writer.add_document(url=url, content=text, title=title, teaser=teaser) # Add the crawled URL to the Whoosh index
         print(f"{self.index_page.__name__} > Indexed content from the URL {url} with the title {title}.")
 
