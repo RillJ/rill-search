@@ -2,13 +2,21 @@
 <html>
 <head>
     <title>Rill Search - Results</title>
+    <style>
+        ul {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+        }
+    </style>
 </head>
 <body>
     {% if results %} <!-- Check if there are any search results. -->
         <ul>
             <!-- Loop through each URL in the results, then show clickable links which open in new tabs. -->
-            {% for url in results %}
-                <li><a href="{{ url }}" target="_blank">{{ url }}</a></li>
+            {% for result in results %}
+                <h3><a href="{{ result['url'] }}" target="_blank">{{ result['title'] }}</a></h3>
+                <p>{{ result['teaser'] }}</p>
             {% endfor %}
         </ul>
     {% else %} <!-- If there are no search results, tell the user. -->

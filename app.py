@@ -59,7 +59,11 @@ def search():
         results = index.searcher().search(whoosh_query) # Search on this query
         found_urls = []
         for result in results:
-            found_urls.append(result["url"]) # Append only the URLs to the list
+            found_urls.append({ # Append only the URLs, title and teaser to the list
+                "url": result["url"],
+                "title": result["title"],
+                "teaser": result["teaser"],
+                })
         print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}. Drawing the search results page.")
         return render_template("search.html", results=found_urls, query=query)
     print(f"{print_prefix} Input search query is empty. Drawing the search results page.")

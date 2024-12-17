@@ -26,7 +26,13 @@ class Crawler:
         self.visited_urls = set() # Easier than a list (prevents duplicates)
         if not os.path.exists("indexdir"):
             os.mkdir("indexdir") # Create Whoosh indexdir folder if it doesn't exist
-        schema = Schema(url=ID(stored=True, unique=True), content=TEXT) # Setting up Whoosh index
+        # Setting up Whoosh index
+        schema = Schema(
+            url=ID(stored=True, unique=True),
+            title=TEXT(stored=True),
+            teaser=TEXT(stored=True),
+            content=TEXT
+        )
         self.index = create_in("indexdir", schema)
         self.writer = self.index.writer()
 
@@ -93,15 +99,25 @@ class Crawler:
 
     def index_page(self, url, html):
         """
-        Use the Whoosh library to index the HTML text content found on the given page.
+        Use the Whoosh library to index the HTML title and content found on the given page.
         Var 'url': The URL of the HTML page that contains text content.
         Var 'html': Scraped plaintext HTML content of the crawled URL in question.
         """
-        print_prefix = f"{self.index_page.__name__} >"
         soupie = BeautifulSoup(html, "html.parser")
+        
+        # Extract the title, use URL as fallback if title is missing
+        if soupie.title:
+            title = soupie.title.string.strip()
+        else:
+            title = url
         text = soupie.get_text() # Extract the visible text from the HTML
-        self.writer.add_document(url=url, content=text) # Add the crawled URL to the Whoosh index
-        print(f"{print_prefix} Indexed content from the URL: {url}")
+        # First 250 words appended by dots as a 'teaser'
+        if len(text) > 150:
+            teaser = text[:150] + "..."
+        else:
+            teaser = text
+        self.writer.add_document(url=url, content=text, title=title, teaser=teaser) # Add the crawled URL to the Whoosh index
+        print(f"{self.index_page.__name__} > Indexed content from the URL {url} with the title {title}.")
 
     # def search(self, query):
     #     """
