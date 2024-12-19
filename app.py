@@ -13,7 +13,7 @@
 # limitations under the License.
 
 from crawler.crawl import Crawler
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, redirect
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 
@@ -51,12 +51,15 @@ def search():
     Search route, searches the crawled index with Whoosh and shows the results.
     """
     query = request.args.get("q") # Get the input query from the form
+    frisky = request.args.get("frisky") # If the user pressed the "I'm Feeling Frisky..." button
     if query:
         index = open_dir("indexdir") # Open the crawled Whoosh index
         print_prefix = f"{search.__name__} >"
         print(f"{search.__name__} > Searching for: '{query}'")
         whoosh_query = QueryParser("content", index.schema).parse(query) # Parse query to a Whoosh query
         results = index.searcher().search(whoosh_query) # Search on this query
+        if frisky and results:
+            return redirect(results[0]["url"]) # Redirect to the first result's URL
         found_urls = []
         for result in results:
             found_urls.append({ # Append only the URLs, title and teaser to the list
