@@ -2,8 +2,28 @@
 <html>
 <head>
     <title>Rill Search</title>
+    <style>
+        html, body {
+            height: 100%;
+        }
+
+        html {
+            display: table;
+            margin: auto;
+        }
+        body {
+            display: table-cell;
+            vertical-align: middle;
+        }
+        .center {
+            display: block;
+            margin-left: auto;
+            margin-right: auto;
+        }
+    </style>
 </head>
 <body>
+    <img src="/static/rill-search-logo.png" alt="Rill Search Logo", class="center", style="width:250px">
     <form action="/search" method="get">
         <input type="text" name="q" placeholder="Enter your search query!" required>
         <button type="submit">Search with Rill Search...</button>
