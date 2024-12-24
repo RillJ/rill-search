@@ -14,26 +14,27 @@
 
 import os
 import requests
+import argparse
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin, urlparse
-from whoosh.index import create_in
+from whoosh.index import create_in, exists_in
 from whoosh.fields import Schema, TEXT, ID
-#from whoosh.qparser import QueryParser
+# from whoosh.qparser import QueryParser
 
 class Crawler:
-    def __init__(self, start_url):
+    def __init__(self, start_url, index_dir):
         self.start_url = start_url # Start crawling from this URL
         self.visited_urls = set() # Easier than a list (prevents duplicates)
-        if not os.path.exists("indexdir"):
-            os.mkdir("indexdir") # Create Whoosh indexdir folder if it doesn't exist
+        if not os.path.exists(index_dir):
+            os.mkdir(index_dir) # Create Whoosh index folder if it doesn't exist
         # Setting up Whoosh index
         schema = Schema(
             url=ID(stored=True, unique=True),
-            title=TEXT(stored=True),
+            title=TEXT(stored=True, field_boost=2.0),
             teaser=TEXT(stored=True),
             content=TEXT
         )
-        self.index = create_in("indexdir", schema)
+        self.index = create_in(index_dir, schema)
         self.writer = self.index.writer()
 
     def start_crawling(self):
@@ -145,3 +146,17 @@ class Crawler:
 #     crawler = Crawler("https://vm009.rz.uos.de/crawl/index.html")
 #     crawler.start_crawling()
 #     search_results = crawler.search("Australia and Biology")
+
+# Command-line interface
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Rill Search CLI - Indexing and Scraping")
+    parser.add_argument("--start-url", default="https://vm009.rz.uos.de/crawl/index.html", help="Starting URL for the crawler.")
+    parser.add_argument("--index-dir", default="indexdir", help="Directory to store the Whoosh index into.")
+    parser.add_argument("--force", action=argparse.BooleanOptionalAction, help="Forces crawling even if an index already exists.")
+    args = parser.parse_args() # Get the user entered arguments into a variable
+    # Start crawling unless an index already exists 
+    if exists_in(args.index_dir) and not args.force:
+        print(f"An index has already been built in '{args.index_dir}'.")
+    else:
+        crawler = Crawler(start_url=args.start_url, index_dir=args.index_dir)
+        crawler.start_crawling()

@@ -12,30 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from crawler.crawl import Crawler
+# from crawler.crawl import Crawler
 from flask import Flask, request, render_template, redirect
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 
 app = Flask(__name__)
 
-def initialize_crawler():
-    """
-    Initialize the crawler by building the index.
-    """
-    start_url = "https://vm009.rz.uos.de/crawl/index.html"
-    crawler = Crawler(start_url)
-    crawler.start_crawling()
-    print(f"{initialize_crawler.__name__} > The crawler has finished initialising.")
+# def initialize_crawler():
+#     """
+#     Initialize the crawler by building the index.
+#     """
+#     start_url = "https://vm009.rz.uos.de/crawl/index.html"
+#     crawler = Crawler(start_url)
+#     crawler.start_crawling()
+#     print(f"{initialize_crawler.__name__} > The crawler has finished initialising.")
 
-@app.before_request
-def setup_index():
-    """
-    Initialises the crawler once on startup of the Flask app.
-    """
-    app.before_request_funcs[None].remove(setup_index) # Remove this handler after execution
-    print(f"{setup_index.__name__} > Starting to setup the index.")
-    initialize_crawler()
+# @app.before_request
+# def setup_index():
+#     """
+#     Initialises the crawler once on startup of the Flask app.
+#     """
+#     app.before_request_funcs[None].remove(setup_index) # Remove this handler after execution
+#     print(f"{setup_index.__name__} > Starting to setup the index.")
+#     initialize_crawler()
 
 @app.route("/")
 def home():
@@ -53,7 +53,7 @@ def search():
     query = request.args.get("q") # Get the input query from the form
     frisky = request.args.get("frisky") # If the user pressed the "I'm Feeling Frisky..." button
     if query:
-        index = open_dir("indexdir") # Open the crawled Whoosh index
+        index = open_dir("crawler/indexdir") # Open the crawled Whoosh index
         print_prefix = f"{search.__name__} >"
         print(f"{search.__name__} > Searching for: '{query}'")
         whoosh_query = QueryParser("content", index.schema).parse(query) # Parse query to a Whoosh query
