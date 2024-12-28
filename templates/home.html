@@ -8,7 +8,7 @@
 </head>
 <body class="bg-gray-50 flex items-center justify-center min-h-screen">
     <div class="text-center">
-        <img src="/static/rill-search-logo.png" alt="Rill Search Logo" class="mx-auto mb-6 w-64">
+        <img src="{{ url_for('static', filename='rill-search-logo.png') }}" alt="Rill Search Logo" class="mx-auto mb-6 w-64">
         {% include "includes/search_form.html" %}
     </div>
 </body>

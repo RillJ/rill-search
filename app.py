@@ -13,7 +13,7 @@
 # limitations under the License.
 
 # from crawler.crawl import Crawler
-from flask import Flask, request, render_template, redirect
+from flask import Flask, request, render_template, redirect, url_for
 from whoosh.index import open_dir
 from whoosh.qparser import QueryParser
 
@@ -84,7 +84,7 @@ def prepare_search_results(results):
 #endregion
 
 #region App Routes
-@app.route("/")
+@app.route("/", endpoint="home")
 def home():
     """
     Home route, shows the home page.
@@ -92,7 +92,7 @@ def home():
     print(f"{home.__name__} > Drawing the home page.")
     return render_template("home.html")
 
-@app.route("/search")
+@app.route("/search", endpoint="search")
 def search():
     """
     Search route, searches the crawled index with Whoosh and shows the results.
@@ -108,11 +108,14 @@ def search():
         results = execute_search(query, ix)
         found_urls = prepare_search_results(results)
         # Check if the "I'm Feeling Frisky..." button was clicked
-        if frisky and results: 
+        if frisky and results:
             return redirect(results[0]["url"]) # Redirect to the first result's URL
         else: # Log results and render template
             print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}. Drawing the search results page.")
-            return render_template("search.html", results=found_urls, query=query, corrected_query=corrected_query)
+            return render_template("search.html",
+                                   results=found_urls,
+                                   query=query,
+                                   corrected_query=corrected_query)
     else: # If the user somehow input nothing, return empty results
         print(f"{print_prefix} Input search query is empty. Drawing empty search results page.")
         return render_template("search.html", results=[], query=query)

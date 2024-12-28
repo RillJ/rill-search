@@ -11,11 +11,11 @@
         <div>
             {% include "includes/search_form.html" %}
             {% if corrected_query %}
-                <p class="text-sm text-red-600">Did you mean: <a href="/search?q={{ corrected_query }}" class="text-blue-500 hover:underline">{{ corrected_query }}</a>?</p>
+                <p class="text-sm text-red-600">Did you mean: <a href="{{ url_for('search', q=corrected_query) }}" class="text-blue-500 hover:underline">{{ corrected_query }}</a>?</p>
             {% endif %}
         </div>
-        <a href="/"> <!-- Clicking the logo redirects to home. -->
-            <img src="/static/rill-search-logo.png" alt="Rill Search Logo" class="w-16">
+        <a href="{{ url_for('home') }}"> <!-- Clicking the logo redirects to home. -->
+            <img src="{{ url_for('static', filename='rill-search-logo.png') }}" alt="Rill Search Logo" class="w-16">
         </a>
     </div>
     {% if results %} <!-- Check if there are any search results. -->
