@@ -1,27 +1,33 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Rill Search - Results</title>
-    <style>
-        ul {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rill Search - Results for {{ query }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
+<body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen">
+    <div class="flex items-center justify-between w-full p-4">
+        {% include "includes/search_form.html" %}
+        <a href="/"> <!-- Clicking the logo redirects to home. -->
+            <img src="/static/rill-search-logo.png" alt="Rill Search Logo" class="w-16">
+        </a>
+    </div>
     {% if results %} <!-- Check if there are any search results. -->
-        <ul>
-            <!-- Loop through each URL in the results, then show clickable links which open in new tabs. -->
-            {% for result in results %}
-                <h3><a href="{{ result['url'] }}" target="_blank">{{ result['title'] }}</a></h3>
-                <p>{{ result['teaser']|safe }}</p>
-            {% endfor %}
-        </ul>
+        <div class="w-full max-w-3xl">
+            <ul class="list-none p-0">
+                <!-- Loop through each URL in the results, then show clickable links which open in new tabs. -->
+                {% for result in results %}
+                    <li class="border-b-2 border-gray-300 py-4">
+                        <h3><a href="{{ result['url'] }}" target="_blank" class="text-xl text-blue-600 hover:underline">{{ result['title'] }}</a></h3>
+                        <p class="text-gray-500 text-sm mb-2"><a href="{{ result['url'] }}" target="_blank">{{ result['url'] }}</a></p>
+                        <p class="text-gray-700">{{ result['teaser']|safe }}</p>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     {% else %} <!-- If there are no search results, tell the user. -->
-        <p>Rill Search couldn't find anything for your query "{{ query }}", sorry!</p>
+        <p class="text-xl text-gray-700">Rill Search couldn't find anything for your query "{{ query }}", sorry!</p>
     {% endif %}
-    <a href="/">Back home</a> <!-- Show a clickable link which goes back home (to search again). -->
 </body>
 </html>

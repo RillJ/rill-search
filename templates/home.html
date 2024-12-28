@@ -1,32 +1,15 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rill Search</title>
-    <style>
-        html, body {
-            height: 100%;
-        }
-        html {
-            display: table;
-            margin: auto;
-        }
-        body {
-            display: table-cell;
-            vertical-align: middle;
-        }
-        .center {
-            display: block;
-            margin-left: auto;
-            margin-right: auto;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body>
-    <img src="/static/rill-search-logo.png" alt="Rill Search Logo", class="center", style="width:250px">
-    <form action="/search" method="get">
-        <input type="text" name="q" placeholder="Enter your search query!" required>
-        <button type="submit">Search with Rill Search...</button>
-        <button type="submit" name="frisky" value="1">I'm Feeling Frisky...</button>
-    </form>
+<body class="bg-gray-50 flex items-center justify-center min-h-screen">
+    <div class="text-center">
+        <img src="/static/rill-search-logo.png" alt="Rill Search Logo" class="mx-auto mb-6 w-64">
+        {% include "includes/search_form.html" %}
+    </div>
 </body>
 </html>
