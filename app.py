@@ -37,6 +37,50 @@ app = Flask(__name__)
 #     print(f"{setup_index.__name__} > Starting to setup the index.")
 #     initialize_crawler()
 
+#region Helper Functions
+def get_spelling_suggestion(query, ix):
+    """
+    Helper function to handle spelling correction suggestions.
+    Var 'query': The query used for searching.
+    Var 'ix': The Whoosh indexer to use for determining spelling suggestions.
+    Returns: The suggested word if a typo is detected, and if not, returns None.
+    """
+    with ix.searcher() as searcher: # Use the searcher context
+        corrector = searcher.corrector("content") # Create the corrector for the 'content' field
+        suggested_word = corrector.suggest(query, limit=1) # Get one suggestion
+    if suggested_word and suggested_word[0] != query:
+        return suggested_word[0] # Return the suggested word
+    else:
+        return None
+
+def execute_search(query, ix):
+    """
+    Helper function to execute the search on the Whoosh index.
+    Var 'query': The query used for searching.
+    Var 'ix': The Whoosh indexer to use for searching.
+    Returns: The Whoosh search results as a list.
+    """
+    whoosh_query = QueryParser("content", ix.schema).parse(query) # Parse query to a Whoosh query
+    results = ix.searcher().search(whoosh_query) # Search on this query
+    return results
+
+def prepare_search_results(results):
+    """
+    Helper function to prepare the search result data.
+    Var 'results': The Whoosh search results as a list. 
+    Returns: A list of search result data to send to a render template.
+    """
+    found_urls = []
+    for result in results:
+        found_urls.append({ # Append only the URLs, title and teaser to the list
+            "url": result["url"],
+            "title": result["title"],
+            "teaser": result["teaser"],
+        })
+    return found_urls
+#endregion
+
+#region App Routes
 @app.route("/")
 def home():
     """
@@ -53,24 +97,23 @@ def search():
     query = request.args.get("q") # Get the input query from the form
     frisky = request.args.get("frisky") # If the user pressed the "I'm Feeling Frisky..." button
     if query:
-        index = open_dir("crawler/indexdir") # Open the crawled Whoosh index
         print_prefix = f"{search.__name__} >"
         print(f"{search.__name__} > Searching for: '{query}'")
-        whoosh_query = QueryParser("content", index.schema).parse(query) # Parse query to a Whoosh query
-        results = index.searcher().search(whoosh_query) # Search on this query
-        if frisky and results:
+        ix = open_dir("crawler/indexdir") # Open the crawled Whoosh index
+        # Call helper functions for search logic
+        corrected_query = get_spelling_suggestion(query, ix)
+        results = execute_search(query, ix)
+        found_urls = prepare_search_results(results)
+        # Check if the "I'm Feeling Frisky..." button was clicked
+        if frisky and results: 
             return redirect(results[0]["url"]) # Redirect to the first result's URL
-        found_urls = []
-        for result in results:
-            found_urls.append({ # Append only the URLs, title and teaser to the list
-                "url": result["url"],
-                "title": result["title"],
-                "teaser": result["teaser"],
-                })
-        print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}. Drawing the search results page.")
-        return render_template("search.html", results=found_urls, query=query)
-    print(f"{print_prefix} Input search query is empty. Drawing the search results page.")
-    return render_template("search.html", results=[], query=query) # If the user somehow input nothing, return empty results
+        else: # Log results and render template
+            print(f"{print_prefix} For the search '{query}', found URLs: {found_urls}. Drawing the search results page.")
+            return render_template("search.html", results=found_urls, query=query, corrected_query=corrected_query)
+    else: # If the user somehow input nothing, return empty results
+        print(f"{print_prefix} Input search query is empty. Drawing empty search results page.")
+        return render_template("search.html", results=[], query=query)
+#endregion
 
 if __name__ == "__main__":
     app.run(debug=True)

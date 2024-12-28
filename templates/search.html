@@ -8,7 +8,12 @@
 </head>
 <body class="bg-gray-50 flex flex-col items-center justify-center min-h-screen">
     <div class="flex items-center justify-between w-full p-4">
-        {% include "includes/search_form.html" %}
+        <div>
+            {% include "includes/search_form.html" %}
+            {% if corrected_query %}
+                <p class="text-sm text-red-600">Did you mean: <a href="/search?q={{ corrected_query }}" class="text-blue-500 hover:underline">{{ corrected_query }}</a>?</p>
+            {% endif %}
+        </div>
         <a href="/"> <!-- Clicking the logo redirects to home. -->
             <img src="/static/rill-search-logo.png" alt="Rill Search Logo" class="w-16">
         </a>

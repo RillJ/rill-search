@@ -103,16 +103,16 @@ class Crawler:
             print(f"{print_prefix} The URL {url} is not on the same server as {start_netloc}. Ignoring.")
             return False
 
-    def extract_title(self, soup, url):
+    def extract_title(self, soupie, url):
         """
         Attempts to extract the HTML title of a webpage.
         Var 'soupie': The BeautifulSoup instance of the HTML webpage the title will be extracted from.
         Var 'url': The URL of the same HTML webpage.
-        Returns: the title of the HTML, or if not found, the URL as a fallback.
+        Returns: The title of the HTML, or if not found, the URL as a fallback.
         """
         print_prefix = f"{self.extract_title.__name__} >"
-        if soup.title:
-            title = soup.title.string.strip()
+        if soupie.title:
+            title = soupie.title.string.strip()
             print(f"{print_prefix} Found the title '{title}' in the URL: {url}")
             return title
         else:
@@ -123,7 +123,7 @@ class Crawler:
         """
         Attempts to extract the HTML body content of a webpage.
         Var 'soupie': The BeautifulSoup instance of the HTML webpage the body will be extracted from.
-        Returns: the body content form the HTML, or if not found, an error message as a fallback.
+        Returns: The body content form the HTML, or if not found, an error message as a fallback.
         """
         print_prefix = f"{self.extract_body_content.__name__} >"
         body = soupie.find("body")
@@ -139,7 +139,7 @@ class Crawler:
         Generates a teaser summary using ChatGPT.
         Var 'content': Serves as the input text for summarization.
         Var 'title': The title of the web page to be summarized.
-        Returns: the LLM-summarized teaser, or if this process failed, truncated content as a fallback.
+        Returns: The LLM-summarized teaser, or if this process failed, truncated content as a fallback.
         """
         print_prefix = f"{self.generate_teaser.__name__} >"
         sanitized_content = bleach.clean(content) # Prevent XSS attacks
