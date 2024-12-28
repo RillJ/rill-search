@@ -45,12 +45,15 @@ def get_spelling_suggestion(query, ix):
     Var 'ix': The Whoosh indexer to use for determining spelling suggestions.
     Returns: The suggested word if a typo is detected, and if not, returns None.
     """
+    print_prefix = f"{get_spelling_suggestion.__name__} >"
     with ix.searcher() as searcher: # Use the searcher context
         corrector = searcher.corrector("content") # Create the corrector for the 'content' field
         suggested_word = corrector.suggest(query, limit=1) # Get one suggestion
     if suggested_word and suggested_word[0] != query:
+        print(f"{print_prefix} Found word suggestion '{suggested_word[0]}' for query: {query}'")
         return suggested_word[0] # Return the suggested word
     else:
+        print(f"{print_prefix} No word suggestions found for query: {query}'")
         return None
 
 def execute_search(query, ix):
@@ -98,7 +101,7 @@ def search():
     frisky = request.args.get("frisky") # If the user pressed the "I'm Feeling Frisky..." button
     if query:
         print_prefix = f"{search.__name__} >"
-        print(f"{search.__name__} > Searching for: '{query}'")
+        print(f"{print_prefix} Searching for: '{query}'")
         ix = open_dir("crawler/indexdir") # Open the crawled Whoosh index
         # Call helper functions for search logic
         corrected_query = get_spelling_suggestion(query, ix)
