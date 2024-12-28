@@ -15,11 +15,15 @@
 import os
 import requests
 import argparse
+from openai import OpenAI
 from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from urllib.parse import urljoin, urlparse
 from whoosh.index import create_in, exists_in
 from whoosh.fields import Schema, TEXT, ID
 # from whoosh.qparser import QueryParser
+
+load_dotenv() # Load OpenAI API key
 
 class Crawler:
     def __init__(self, start_url, index_dir):
@@ -98,6 +102,71 @@ class Crawler:
             print(f"{print_prefix} The URL {url} is not on the same server as {start_netloc}. Ignoring.")
             return False
 
+    def extract_title(self, soup, url):
+        """
+        Attempts to extract the HTML title of a webpage.
+        Var 'soupie': The BeautifulSoup instance of the HTML webpage the title will be extracted from.
+        Var 'url': The URL of the same HTML webpage.
+        Returns: the title of the HTML, or if not found, the URL as a fallback.
+        """
+        print_prefix = f"{self.extract_title.__name__} >"
+        if soup.title:
+            title = soup.title.string.strip()
+            print(f"{print_prefix} Found the title '{title}' in the URL: {url}")
+            return title
+        else:
+            print(f"{print_prefix} Didn't find a page title in the URL {url}. Defaulting to URL.")
+            return url
+
+    def extract_body_content(self, soupie):
+        """
+        Attempts to extract the HTML body content of a webpage.
+        Var 'soupie': The BeautifulSoup instance of the HTML webpage the body will be extracted from.
+        Returns: the body content form the HTML, or if not found, an error message as a fallback.
+        """
+        print_prefix = f"{self.extract_body_content.__name__} >"
+        body = soupie.find("body")
+        if body:
+            print(f"{print_prefix} Found body content.")
+            return body.get_text(strip=True)
+        else:
+            print(f"{print_prefix} Didn't find body content. Defaulting to error message.")
+            return "No body found on this web page."
+
+    def generate_teaser(self, content, title):
+        """
+        Generates a teaser summary using ChatGPT.
+        Var 'content': Serves as the input text for summarization.
+        Var 'title': The title of the web page to be summarized.
+        Returns: the LLM-summarized teaser, or if this process failed, truncated content as a fallback.
+        """
+        print_prefix = f"{self.generate_teaser.__name__} >"
+        try:
+            client = OpenAI(
+                api_key=os.environ.get("OPENAI_API_KEY"),
+            )
+            system_prompt = """
+            You are an assistant that creates concise teaser summaries from webpage content for a search engine.
+            Highlight important text using HTML, not markdown, by surrounding it with <b> tags, like this: <b>important text</b>.
+            """
+            user_prompt = f"Summarize the content for the page called {title}: {content[:4000]}" # Don't send the whole webpage to the website to prevent token limits
+            response = client.chat.completions.create(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt}
+                ],
+                model="gpt-4o-mini"
+            )
+            teaser = response.choices[0].message.content.strip()
+            print(f"{print_prefix} Succesfully generated a teaser summary with ChatGPT: {teaser}")
+            return teaser
+        except Exception as e: # Fall back to truncating content if ChatGPT fails
+            print(f"{print_prefix} Failed to generate teaser using OpenAI API: {e}")
+            if len(content) > 300:
+                return content[:300] + "..."
+            else:
+                return content
+
     def index_page(self, url, html):
         """
         Use the Whoosh library to index the HTML title and content found on the given page.
@@ -105,26 +174,13 @@ class Crawler:
         Var 'html': Scraped plaintext HTML content of the crawled URL in question.
         """
         soupie = BeautifulSoup(html, "html.parser")
-        
-        # Extract the title, use URL as fallback if title is missing
-        if soupie.title:
-            title = soupie.title.string.strip()
-        else:
-            title = url
-        text = soupie.get_text(strip=True) # Obtain all text on the web page
-        # Extract content only from <p> tags to avoid irrelevant text for the teaser
-        paragraphs = ""
-        for p in soupie.find_all("p"):
-            paragraphs += f"{p.get_text(strip=True)}\n"
-        if len(paragraphs) < 1:
-            paragraphs = "No text found on this web page."
-        # First 150 words appended by dots as a 'teaser'
-        if len(paragraphs) > 150:
-            teaser = paragraphs[:150] + "..."
-        else:
-            teaser = paragraphs
-        self.writer.add_document(url=url, content=text, title=title, teaser=teaser) # Add the crawled URL to the Whoosh index
-        print(f"{self.index_page.__name__} > Indexed content from the URL {url} with the title {title}.")
+        # Extract indexing components
+        title = self.extract_title(soupie, url)
+        body_content = self.extract_body_content(soupie)
+        teaser = self.generate_teaser(body_content, title)
+        # Add the crawled URL to the Whoosh index
+        self.writer.add_document(url=url, content=body_content, title=title, teaser=teaser)
+        print(f"{self.index_page.__name__} > Indexed content from the URL {url} with the title '{title}'.")
 
     # def search(self, query):
     #     """

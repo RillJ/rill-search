@@ -16,7 +16,7 @@
             <!-- Loop through each URL in the results, then show clickable links which open in new tabs. -->
             {% for result in results %}
                 <h3><a href="{{ result['url'] }}" target="_blank">{{ result['title'] }}</a></h3>
-                <p>{{ result['teaser'] }}</p>
+                <p>{{ result['teaser']|safe }}</p>
             {% endfor %}
         </ul>
     {% else %} <!-- If there are no search results, tell the user. -->

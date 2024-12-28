@@ -2,3 +2,5 @@ requests
 beautifulsoup4
 whoosh
 flask
+openai
+python-dotenv
