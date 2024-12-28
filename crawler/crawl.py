@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import bleach
 import requests
 import argparse
 from openai import OpenAI
@@ -141,6 +142,7 @@ class Crawler:
         Returns: the LLM-summarized teaser, or if this process failed, truncated content as a fallback.
         """
         print_prefix = f"{self.generate_teaser.__name__} >"
+        sanitized_content = bleach.clean(content) # Prevent XSS attacks
         try:
             client = OpenAI(
                 api_key=os.environ.get("OPENAI_API_KEY"),
@@ -149,7 +151,7 @@ class Crawler:
             You are an assistant that creates concise teaser summaries from webpage content for a search engine.
             Highlight important text using HTML, not markdown, by surrounding it with <b> tags, like this: <b>important text</b>.
             """
-            user_prompt = f"Summarize the content for the page called {title}: {content[:4000]}" # Don't send the whole webpage to the website to prevent token limits
+            user_prompt = f"Summarize the content for the page called {title}: {sanitized_content[:4000]}" # Don't send the whole webpage to the website to prevent token limits
             response = client.chat.completions.create(
                 messages=[
                     {"role": "system", "content": system_prompt},
@@ -162,10 +164,10 @@ class Crawler:
             return teaser
         except Exception as e: # Fall back to truncating content if ChatGPT fails
             print(f"{print_prefix} Failed to generate teaser using OpenAI API: {e}")
-            if len(content) > 300:
-                return content[:300] + "..."
+            if len(sanitized_content) > 300:
+                return sanitized_content[:300] + "..."
             else:
-                return content
+                return sanitized_content
 
     def index_page(self, url, html):
         """

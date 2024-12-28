@@ -4,3 +4,4 @@ whoosh
 flask
 openai
 python-dotenv
+bleach
